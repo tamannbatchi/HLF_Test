@@ -1,0 +1,22 @@
+
+OrdererOrgs:
+  - Name: Orderer
+    Domain: bi
+    Specs:
+      - Hostname: orderer0
+      - Hostname: orderer1
+      - Hostname: orderer2
+
+PeerOrgs:
+  - Name: Dana
+    Domain: dana
+    Template:
+      Count: 2
+    Users:
+      Count: 1
+  - Name: Gopay
+    Domain: gopay
+    Template:
+      Count: 2
+    Users:
+      Count: 1

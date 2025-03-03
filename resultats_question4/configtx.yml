@@ -1,0 +1,185 @@
+
+Organizations:
+  - &OrdererOrg
+    Name: OrdererOrg
+    ID: OrdererMSP
+    MSPDir: crypto-config/ordererOrganizations/bi/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule:  "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+      BlockValidation:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+
+  - &DanaOrg
+    Name: DanaOrg
+    ID: DanaMSP
+    MSPDir: crypto-config/peerOrganizations/dana/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('DanaMSP.member')"
+      Writers:
+        Type: Signature
+        Rule:  "OR('DanaMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('DanaMSP.admin')"
+    AnchorPeers:
+      - Host: peer0.dana
+        Port: 7051
+
+  - &GopayOrg
+    Name: GopayOrg
+    ID: GopayMSP
+    MSPDir: crypto-config/peerOrganizations/gopay/msp
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('GopayMSP.member')"
+      Writers:
+        Type: Signature
+        Rule:  "OR('GopayMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('GopayMSP.admin')"
+    AnchorPeers:
+      - Host: peer0.gopay
+        Port: 9051
+
+Capabilities:
+  Channel: &ChannelCapabilities
+    V2_0: true
+  Orderer: &OrdererCapabilities
+    V2_0: true
+  Application: &ApplicationCapabilities
+    V2_0: true
+
+Application: &ApplicationDefaults
+  ACLs: &ACLsDefault
+    _defaut: /channel/Application/Readers
+  Capabilities:
+    <<: *ApplicationCapabilities
+  Policies:
+    Readers:
+      Type: Signature
+      Rule: "OR('DanaMSP.member', 'GopayMSP.member')"
+    Writers:
+      Type: Signature
+      Rule:  "OR('DanaMSP.member',  'GopayMSP.member')"
+    Admins:
+      Type: Signature
+      Rule: "OR('DanaMSP.admin',  'GopayMSP.admin')"
+
+Orderer: &OrdererDefaults
+  OrdererType: etcdraft
+  Addresses:
+    - orderer0.bi:7050
+    - orderer1.bi:7050
+    - orderer2.bi:7050
+  BatchTimeout: 2s
+  BatchSize:
+    MaxMessageCount: 10
+    AbsoluteMaxBytes: 99 MB
+    PreferredMaxBytes: 512 KB
+  EtcdRaft:
+    Consenters:
+      - Host: orderer0.bi
+        Port: 7050
+        ClientTLSCert: crypto-config/ordererOrganizations/bi/orderers/orderer0.bi/tls/server.crt
+        ServerTLSCert: crypto-config/ordererOrganizations/bi/orderers/orderer0.bi/tls/server.crt
+      - Host: orderer1.bi
+        Port: 7050
+        ClientTLSCert: crypto-config/ordererOrganizations/bi/orderers/orderer1.bi/tls/server.crt
+        ServerTLSCert: crypto-config/ordererOrganizations/bi/orderers/orderer1.bi/tls/server.crt
+      - Host: orderer2.bi
+        Port: 7050
+        ClientTLSCert: crypto-config/ordererOrganizations/bi/orderers/orderer2.bi/tls/server.crt
+        ServerTLSCert: crypto-config/ordererOrganizations/bi/orderers/orderer2.bi/tls/server.crt
+  Organizations:
+    - *OrdererOrg
+  Policies:
+    Readers:
+      Type: Signature
+      Rule: "OR('OrdererMSP.member')"
+    Writers:
+      Type: Signature
+      Rule:  "OR('OrdererMSP.member')"
+    Admins:
+      Type: Signature
+      Rule: "OR('OrdererMSP.admin')"
+    BlockValidation:
+      Type: Signature
+      Rule: "OR('OrdererMSP.member')"
+  Capabilities:
+    <<: *OrdererCapabilities
+
+Channel: &ChannelDefaults
+  Policies:
+    Readers:
+      Type: Signature
+      Rule: "OR('OrdererMSP.member', 'DanaMSP.member', 'GopayMSP.member')"
+    Writers:
+      Type: Signature
+      Rule: "OR('OrdererMSP.member', 'DanaMSP.member', 'GopayMSP.member')"
+    Admins:
+      Type: Signature
+      Rule: "OR('OrdererMSP.admin', 'DanaMSP.admin', 'GopayMSP.admin')"
+  Capabilities:
+    <<: *ChannelCapabilities
+
+Profiles:
+  OrdererGenesis:
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *OrdererOrg
+    Consortiums:
+      SampleConsortium:
+        Organizations:
+          - *DanaOrg
+          - *GopayOrg
+    Policies:
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+      BlockValidation:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+    Capabilities:
+      <<: *ChannelCapabilities
+
+  ChannelProfile:
+    Consortium: SampleConsortium
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *DanaOrg
+        - *GopayOrg
+      Policies:
+        Readers:
+          Type: Signature
+          Rule: "OR('OrdererMSP.member', 'DanaMSP.member', 'GopayMSP.member')"
+        Writers:
+          Type: Signature
+          Rule: "OR('OrdererMSP.member', 'DanaMSP.member', 'GopayMSP.member')"
+        Admins:
+          Type: Signature
+          Rule: "OR('OrdererMSP.admin', 'DanaMSP.admin', 'GopayMSP.admin')"
+      Capabilities:
+        <<: *ApplicationCapabilities
+
+
